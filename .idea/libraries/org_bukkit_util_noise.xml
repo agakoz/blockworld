@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="org.bukkit.util.noise">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/org.bukkit.util.noise.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
