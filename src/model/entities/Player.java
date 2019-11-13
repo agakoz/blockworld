@@ -1,25 +1,21 @@
 /**
  * @author agata.koziol
  */
-package model;
+package model.entities;
 
+import model.*;
 import model.exceptions.*;
 
 /**
  * It represents the BlockWorld player. The player has an inventory of items and knows his own location in the world.
  * He or she has a level of health and a level of food that will vary during the development of the game.
  *
- * @author agata.koziol
  */
-public class Player {
+public class Player extends LivingEntity {
     /**
      * Represents user's name.
      */
     private String name;
-    /**
-     * Represents user's health.
-     */
-    private double health;
     /**
      * Represents user's food level.
      */
@@ -28,14 +24,7 @@ public class Player {
      * Represent the maximum levels of food that a player can have.
      */
     public static final double MAX_FOODLEVEL = 20;
-    /**
-     * represent the maximum levels of health that a player can have.
-     */
-    public static final double MAX_HEALTH = 20;
-    /**
-     * Represents location of the Player.
-     */
-    private Location location;
+    private static char symbol = 'P';
     /**
      * Player's inventory in which he/she holds the items.
      */
@@ -46,61 +35,30 @@ public class Player {
      *
      * @param name will be assigned as the value of player's name.
      */
+    private Location orientation;
+
     public Player(String name, World world) {
+        super(new Location(world, 0,0,0), MAX_HEALTH);
         try {
             this.name = name;
-
-            health = MAX_HEALTH;
             foodLevel = MAX_FOODLEVEL;
-            location = world.getHighestLocationAt(new Location(world, 0, 0, 0));
-            location.add(new Location(world, 0, 1, 0));
+            location = world.getHighestLocationAt(location);
+            location = location.above();
+            orientation = new Location(getLocation());
+            orientate(0,0,1);
             inventory = new Inventory();
             inventory.setItemInHand(new ItemStack(Material.WOOD_SWORD, 1));
         } catch (StackSizeException ex) {
             System.out.println(ex.getMessage());
         } catch (BadLocationException ex) {
             throw new RuntimeException(ex.getMessage());
+        } catch (EntityIsDeadException ex){
+            System.out.println(ex.getMessage());
+
         }
 
     }
 
-    /**
-     * Simple getter.
-     *
-     * @return a copy of the player's location.
-     */
-    public Location getLocation() {
-        return new Location(location);
-    }
-
-    /**
-     * It checks if the player has a health level equal to or less than zero.
-     *
-     * @return false if the player's health is greater than 0, true otherwise.
-     */
-    public boolean isDead() {
-        return (health <= 0);
-    }
-
-    /**
-     * simple getter.
-     *
-     * @return player's health points.
-     */
-    public double getHealth() {
-
-        return health;
-    }
-
-    /**
-     * simple setter. It sets the health level, which saturates in MAX_HEALTH.
-     *
-     * @param health health points to be set as a player's health.
-     */
-    public void setHealth(double health) {
-        if (health > MAX_HEALTH) this.health = MAX_HEALTH;
-        else this.health = health;
-    }
 
     /**
      * simple getter.
@@ -119,7 +77,7 @@ public class Player {
      */
     public void setFoodLevel(double foodLevel) {
         if (foodLevel > MAX_FOODLEVEL) this.foodLevel = MAX_FOODLEVEL;
-        //else if (foodLevel < 0) this.foodLevel = 0;
+            //else if (foodLevel < 0) this.foodLevel = 0;
         else this.foodLevel = foodLevel;
     }
 
@@ -148,6 +106,8 @@ public class Player {
      * <p>
      * The player does not move if the method throws any of these exceptions.
      * If he is able to move, his food/health level gets decreased by 0.05 points.
+     * <p>
+     * Method also updates the orientation of the player.
      *
      * @param dx movement in x axis
      * @param dy movement in y axis
@@ -170,6 +130,7 @@ public class Player {
         }
         decreaseFoodLevel(0.05);
         location = newLocation;
+        orientation.add(new Location(orientation.getWorld(), dx, dy, dz));
         return new Location(location);
     }
 
@@ -181,10 +142,11 @@ public class Player {
      * it decreases the player’s food/health level by 0.1*times points.
      *
      * @param times indicates the number of uses of the item
+     * @return item that player has in hand
      * @throws EntityIsDeadException    if the player is dead before using the item.
      * @throws IllegalArgumentException if the argument ‘times’ is less than or equal to zero.
      */
-    public void useItemInHand(int times) throws EntityIsDeadException, IllegalArgumentException {
+    public ItemStack useItemInHand(int times) throws EntityIsDeadException, IllegalArgumentException {
         if (!isDead()) {
             if (times > 0) {
                 if (inventory.getItemInHand() != null) {
@@ -199,7 +161,8 @@ public class Player {
                                     inventory.setItemInHand(null);
                                     break;
                                 }
-                            } catch (StackSizeException ex) { throw new RuntimeException();
+                            } catch (StackSizeException ex) {
+                                throw new RuntimeException();
                             }
 
                             times--;
@@ -211,8 +174,9 @@ public class Player {
                 }
             } else throw new IllegalArgumentException("The item has to be used the positive number of times.");
         } else throw new EntityIsDeadException();
-
+        return inventory.getItemInHand();
     }
+
 
     /**
      * It swaps the item in the hand for the one in position ‘pos’.
@@ -224,11 +188,10 @@ public class Player {
      */
     public void selectItem(int pos) throws BadInventoryPositionException {
         if (inventory.getItem(pos) != null) {
-            if(inventory.getItemInHand()==null || inventory.getItemInHand().getAmount()==0){
+            if (inventory.getItemInHand() == null || inventory.getItemInHand().getAmount() == 0) {
                 inventory.setItemInHand(inventory.getItem(pos));
                 inventory.clear(pos);
-            }
-            else{
+            } else {
                 ItemStack swap = inventory.getItemInHand();
                 inventory.setItemInHand(inventory.getItem(pos));
                 inventory.setItem(pos, swap);
@@ -277,6 +240,52 @@ public class Player {
         }
     }
 
+
+    /**
+     * simple getter.
+     *
+     * @return player’s orientation as an absolute location.
+     */
+    public Location getOrientation() {
+        return orientation;
+    }
+
+    /**
+     * implementation of the LivingEntity class method.
+     *
+     * @return the char ‘P’, which represents the player.
+     */
+    public char getSymbol() {
+        return symbol;
+    }
+
+    /**
+     * It changes the player’s orientation. If the player is in location (x,y,z), he or she is faced towards location (x+dx,y+dy,z+dz)
+     * @param dx x-axis coordinate
+     * @param dy y-axis cooridate
+     * @param dz z-axis coordinate
+     * @return new orienattion of the player
+     * @throws EntityIsDeadException if the player is dead
+     * @throws BadLocationException  If dx==dy==dz==0 (a player cannot be oriented towards himself)
+     * or the orientation is not towards an adjacent location.
+     */
+    public Location orientate(int dx, int dy, int dz) throws EntityIsDeadException, BadLocationException {
+        Location newOrientLoc = new Location(orientation).add(new Location(orientation.getWorld(), dx, dy, dz));
+        if (isDead()) throw new EntityIsDeadException();
+        if (dx == 0 && dy == 0 && dz == 0)
+            throw new BadLocationException("a player cannot be oriented towards himself");
+        if (!location.getNeighborhood().contains(newOrientLoc))
+            throw new BadLocationException("the orientation is not torwards an adjacent location.");
+        orientation = newOrientLoc;
+        return orientation;
+    }
+    private Location getRelativeLocation(){
+        double x= orientation.getX() - location.getX();
+        double y= orientation.getY() - location.getY();
+        double z= orientation.getZ() - location.getZ();
+
+        return new Location(location.getWorld(), x, y, z);
+    }
     /**
      * Creates the string with user infromation.
      *
@@ -285,64 +294,65 @@ public class Player {
     public String toString() {
         return "Name=" + getName() + "\n" +
                 location.toString() + "\n" +
+                "Orientation=" + getRelativeLocation().toString() + "\n" +
                 "Health=" + getHealth() + "\n" +
                 "Food level=" + foodLevel + "\n" +
                 "Inventory=" + inventory.toString();
     }
 
-    /**
-     * Generated automatically that creates hashCode.
-     *
-     * @return hashCode.
-     */
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        long temp;
-        temp = Double.doubleToLongBits(foodLevel);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(health);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        result = prime * result + ((inventory == null) ? 0 : inventory.hashCode());
-        result = prime * result + ((location == null) ? 0 : location.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        return result;
-    }
-
-    /**
-     * Compares this object to another indicated.
-     *
-     * @return true if objects are equal, false if not.
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        Player other = (Player) obj;
-        if (Double.doubleToLongBits(foodLevel) != Double.doubleToLongBits(other.foodLevel))
-            return false;
-        if (Double.doubleToLongBits(health) != Double.doubleToLongBits(other.health))
-            return false;
-        if (inventory == null) {
-            if (other.inventory != null)
-                return false;
-        } else if (!inventory.equals(other.inventory))
-            return false;
-        if (location == null) {
-            if (other.location != null)
-                return false;
-        } else if (!location.equals(other.location))
-            return false;
-        if (name == null) {
-            if (other.name != null)
-                return false;
-        } else if (!name.equals(other.name))
-            return false;
-        return true;
-    }
+//    /**
+//     * Generated automatically that creates hashCode.
+//     *
+//     * @return hashCode.
+//     */
+//    @Override
+//    public int hashCode() {
+//        final int prime = 31;
+//        int result = 1;
+//        long temp;
+//        temp = Double.doubleToLongBits(foodLevel);
+//        result = prime * result + (int) (temp ^ (temp >>> 32));
+//        temp = Double.doubleToLongBits(health);
+//        result = prime * result + (int) (temp ^ (temp >>> 32));
+//        result = prime * result + ((inventory == null) ? 0 : inventory.hashCode());
+//        result = prime * result + ((location == null) ? 0 : location.hashCode());
+//        result = prime * result + ((name == null) ? 0 : name.hashCode());
+//        return result;
+//    }
+//
+//    /**
+//     * Compares this object to another indicated.
+//     *
+//     * @return true if objects are equal, false if not.
+//     */
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (this == obj)
+//            return true;
+//        if (obj == null)
+//            return false;
+//        if (getClass() != obj.getClass())
+//            return false;
+//        Player other = (Player) obj;
+//        if (Double.doubleToLongBits(foodLevel) != Double.doubleToLongBits(other.foodLevel))
+//            return false;
+//        if (Double.doubleToLongBits(health) != Double.doubleToLongBits(other.health))
+//            return false;
+//        if (inventory == null) {
+//            if (other.inventory != null)
+//                return false;
+//        } else if (!inventory.equals(other.inventory))
+//            return false;
+//        if (location == null) {
+//            if (other.location != null)
+//                return false;
+//        } else if (!location.equals(other.location))
+//            return false;
+//        if (name == null) {
+//            if (other.name != null)
+//                return false;
+//        } else if (!name.equals(other.name))
+//            return false;
+//        return true;
+//    }
 }

@@ -1,22 +1,19 @@
 package test.model;
-
 import model.*;
 import static org.junit.Assert.*;
+
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
 
+import model.entities.Creature;
 import model.exceptions.BadInventoryPositionException;
 import model.exceptions.BadLocationException;
 import model.exceptions.EntityIsDeadException;
 
 public class BlockWorld_P2Test {
 
-    @Rule
-    public Timeout globalTimeout = Timeout.seconds(5);
 	
 	final static String STARTPLAY1 ="Name=Steve\n" + 
 			"Location{world=World 5x5,x=0.0,y=66.0,z=0.0}\n" + 
@@ -44,13 +41,14 @@ public class BlockWorld_P2Test {
 			"... ... g..";
 	
 	final static String STARTPLAY2 ="Name=Steve\n" + 
-			"Location{world=World 3x3,x=0.0,y=63.0,z=0.0}\n" + 
+			"Location{world=World 3x3,x=0.0,y=63.0,z=0.0}\n" +
+			"Orientation=Location{world=World 3x3,x=0.0,y=0.0,z=1.0}\n"+
 			"Health=20.0\n" + 
 			"Food level=20.0\n" + 
 			"Inventory=(inHand=(WOOD_SWORD,1),[])\n" + 
-			"... I.. gg.\n" + 
+			"... .B. gg.\n" + 
 			"... .P. gg.\n" + 
-			"... W.. g..";
+			"... ... g..";
 	final static String HALFPLAY2 ="Name=Steve\n" + 
 			"Location{world=World 3x3,x=0.0,y=61.0,z=1.0}\n" + 
 			"Health=20.0\n" + 
@@ -71,6 +69,7 @@ public class BlockWorld_P2Test {
 	BlockWorld bw;
 	World world5x5;
 	World world3x3;
+	World world10x10;
 	
 	
 	@BeforeClass
@@ -93,7 +92,7 @@ public class BlockWorld_P2Test {
 	}
 
 	@Test
-	public void testCreateWorld() throws RuntimeException {
+	public void testCreateWorld() throws RuntimeException{
 		BlockWorld bw=BlockWorld.getInstance();
 		World world = bw.createWorld(1, 3, "World 3x3");
 		assertTrue("world == world3x3",world3x3.equals(world));
@@ -101,11 +100,19 @@ public class BlockWorld_P2Test {
 
 	@Test
 	public void testShowPlayerInfo() throws RuntimeException {
+		System.out.println(bw.showPlayerInfo(world3x3.getPlayer()));
 		compareLines(STARTPLAY2,bw.showPlayerInfo(world3x3.getPlayer()));
 		//System.out.println(bw.showPlayerInfo(world3x3.getPlayer()));
 	}
 	
-
+	@Test
+	public void testShowPlayerInfo2() throws RuntimeException {
+		world10x10 =  bw.createWorld(5, 10, "World 10x10");
+		
+		System.out.println(bw.showPlayerInfo(world10x10.getPlayer()));
+		//compareLines(STARTPLAY2,bw.showPlayerInfo(world3x3.getPlayer()));
+		//System.out.println(bw.showPlayerInfo(world3x3.getPlayer()));
+	}
 	
 	/******************************************************************/
 	//FUNCION DE APOYO
@@ -117,21 +124,7 @@ public class BlockWorld_P2Test {
 		String res[]=result.split("\n");
 		boolean iguales = true;
 		for (int i=0; i<exp.length && iguales; i++) {
-			
-			// si la línea es Health=1.2345  o Food level=1.2345  
-			// se extraen los números y se comparan con 0.01 de margen
-			String ee[]=exp[i].split("=");
-			if (ee[0].equals("Health") || ee[0].equals("Food level")) {
-				String rr[]=res[i].trim().split("=");
-				if (ee[0].equals(rr[0])) {
-					double ed = Double.parseDouble(ee[1]);
-					double rd = Double.parseDouble(rr[1]);
-					
-					assertEquals(ee[0],ed,rd,0.01);
-				}
-			}
-			else
-				assertEquals("linea "+i, exp[i],res[i].trim());
+			assertEquals("linea "+i, exp[i],res[i].trim());
 		}
 	}
 }

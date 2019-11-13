@@ -1,16 +1,11 @@
 package test.model;
-
 import model.*;
 import static org.junit.Assert.*;
 
 import java.util.Set;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
-
 
 import model.exceptions.BadLocationException;
 
@@ -22,17 +17,20 @@ import model.exceptions.BadLocationException;
 
 public class Location_P2Test {
 
-    @Rule
-    public Timeout globalTimeout = Timeout.seconds(5);
+    World earth,mars, mercury;
+    Location le,lm;
 
-	
-    static World mars, mercury;
-
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
+    /* Este metodo se ejecuta antes de cada Test,
+       de manera que los objetos 'earth', 'mars', 'mercury', 'le' y 'lm' son distintos en cada test  */
+    @Before
+    public void setUp() throws Exception {
+        earth = new World(1, 100, "Earth");
         mars = new World(2, 100, "Mars");
         mercury = new World(3,2,"Mercury"); 
-	}
+        
+        le = new Location(earth,1.1,2.2,3.3);
+        lm = new Location(mars, 10.01, 20.02, 30.03);
+    }
 
  
     
@@ -55,7 +53,7 @@ public class Location_P2Test {
     }
     
     /* 
-     * Comprueba que para check, las localizaciones fuera de los límites del mundo no son válidas
+     * Comprueba que para check, las localizaciones fuera los límites del mundo no son válidas
      */
     @Test
     public final void testCheckOutOfLimits() throws RuntimeException
@@ -86,15 +84,16 @@ public class Location_P2Test {
     }
     
     /*
-     * Comprueba isFree en un mundo. Todas las posiciones con bloques  debe
-     * devolver false.
-     */   
+     * Comprueba isFree en un mundo. Todas las posiciones con bloques y donde está player debe
+     * devolver false y las vacías true.
+     */
+    
     @Test
-    public final void testIsFreeFalse() {
+    public final void testIsFree() {
     	
     	
     	Location loc= null; 
-    	/* mercury: Hay bloques en
+    	/* Hay bloques en
     	 *  X      Y     Z
     	 * ---    ---   ---
     	 *  0   [0..70]	 0
@@ -106,63 +105,24 @@ public class Location_P2Test {
     	//System.out.println(mercury.getPlayer().getLocation().toString());
     	for (int x=0; x<2; x++)
     		for (int z=0; z<2; z++) 
-    			for (int y=0; y<=70; y++) {
+    			for (int y=0; y<=Location.UPPER_Y_VALUE; y++) {
     				loc = new Location(mercury,x,y,z);
-    					if ( (x!=1) || (y!=70 ) || (z!=1) ) //No hay bloque
-    						assertFalse("No Libre "+loc.toString(), loc.isFree());     			    				
+    				if (y<=70) {
+    					if ( (x==1) && (y==70 ) && (z==1) ) //No hay bloque
+    						assertTrue("Libre "+loc.toString(),loc.isFree());
+    					else 
+    						assertFalse("No Libre "+loc.toString(), loc.isFree()); 
+    				}
+    				else {
+    					if ( (x==0) && (y==71) && (z==0) ) //Está Player
+    						assertFalse("No Libre "+loc.toString(), loc.isFree());
+    					else 
+    						assertTrue("Libre "+loc.toString(),loc.isFree());
+    				}
+    			    				
     			}			
-    }
- 
-    /*
-     * Comprueba isFree en un mundo. Donde está player debe
-     * devolver false.
-     */   
-    @Test
-    public final void testIsFreeFalsePlayer() {
-    	
-    	
-    	Location loc= null; 
-    	/* mercury: Hay bloques en
-    	 *  X      Y     Z
-    	 * ---    ---   ---
-    	 *  0   [0..70]	 0
-    	 *  0   [0..70]	 1
-    	 *  1   [0..70]	 0
-    	 *  1   [0..69]	 1
-    	 *  Player en (0,71,0)
-    	 */
-    	loc = new Location(mercury,0,71,0);
-    	assertFalse("No Libre "+loc.toString(), loc.isFree());     			    				
     }
     
-    /*
-     * Comprueba isFree en un mundo. Todas las posiciones vacías deben devolver true.
-     */   
-    @Test
-    public final void testIsFreeTrue() {
-    	
-    	Location loc= null; 
-    	/* mercury: Hay bloques en
-    	 *  X      Y     Z
-    	 * ---    ---   ---
-    	 *  0   [0..70]	 0
-    	 *  0   [0..70]	 1
-    	 *  1   [0..70]	 0
-    	 *  1   [0..69]	 1
-    	 *  Player en (0,71,0)
-    	 */
-    	//System.out.println(mercury.getPlayer().getLocation().toString());
-    	for (int x=0; x<2; x++)
-    		for (int z=0; z<2; z++) 
-    			for (int y=71; y<=Location.UPPER_Y_VALUE; y++) {
-    				loc = new Location(mercury,x,y,z);
-    					if ( (x!=0) || (y!=71) || (z!=0) ) // No está Player
-    						assertTrue("Libre "+loc.toString(),loc.isFree());    			    				
-    			}			
-    	loc = new Location(mercury,1,70,1);
-		assertTrue("Libre "+loc.toString(),loc.isFree());    			    				
-    }
- 
     /*
      * Prueba método below() para y [1..UPPER_VALUE] con mundo. 
      * Para y=0 si no hay mundo
@@ -257,27 +217,7 @@ public class Location_P2Test {
      * Prueba de las 26 posiciones adyacentes totales posibles.
      */
     @Test
-    public final void testGetNeighborhoodIn() {
-    	
-    	Location center = new Location(mars, 20.0,150.0, -20.0);
-    	Location vecino;
-    	Set<Location> adyacentes = center.getNeighborhood(); 
-    	
-    	for (int x=19; x<=21; x++) 
-    		for (int y=149; y<=151; y++)
-    			for (int z=-21; z<=-19; z++) {
-    				vecino = new Location (mars,x,y,z);
-    				if (!vecino.equals(center))
-    					assertTrue ("Adyacente "+vecino.toString(), adyacentes.contains(vecino));
-    			}
-    				
-    }
-    
-    /*
-     * Prueba que las posiciones no vecinas no estén incluídas en el vecindario.
-     */
-    @Test
-    public final void testGetNeighborhoodOut() {
+    public final void testGetNeighborhood() {
     	
     	Location center = new Location(mars, 20.0,150.0, -20.0);
     	Location vecino;
@@ -287,8 +227,11 @@ public class Location_P2Test {
     		for (int y=0; y<=Location.UPPER_Y_VALUE; y++)
     			for (int z=-24; z<=25; z++) {
     				vecino = new Location (mars,x,y,z);
-    				if ((x<19) || (x>21) || (y<149) || (y>151) || (z<-21) || (z>-19))
-    					assertFalse ("No adyacente "+vecino.toString(), adyacentes.contains(vecino));
+    				if ((x>=19) && (x<=21) && (y>=149) && (y<=151) && (z>=-21) && (z<=-19) 
+    						 && (!vecino.equals(center)) )
+    					assertTrue ("Adyacente "+vecino.toString(), adyacentes.contains(vecino));
+    				else
+    					assertFalse ("Adyacente "+vecino.toString(), adyacentes.contains(vecino));
     			}
     				
     }
@@ -304,33 +247,15 @@ public class Location_P2Test {
     	Location vecino;
     	Set<Location> adyacentes = center.getNeighborhood(); 
     	
-    	for (int x=0; x<=1; x++) 
-    		for (int y=(int)Location.UPPER_Y_VALUE-1; y<=Location.UPPER_Y_VALUE; y++)
-    			for (int z=0; z<=1; z++) {
-    				vecino = new Location (mercury,x,y,z);
-    				if (!vecino.equals(center))
-    					assertTrue ("Adyacente en mercury"+vecino.toString(), adyacentes.contains(vecino));
-    			}
-    				
-    }
-    
-    /*
-     * Prueba de las posiciones NO adyacentes en un mundo de size 2 con posiciones adyacentes fuera
-     * del mundo (Mercury).
-     */
-    @Test
-    public final void testGetNeighborhoodOutMercury() {
-    	
-    	Location center = new Location(mercury, 0.0, Location.UPPER_Y_VALUE, 0.0);
-    	Location vecino;
-    	Set<Location> adyacentes = center.getNeighborhood(); 
-    	
     	for (int x=-1; x<=1; x++) 
     		for (int y=0; y<=Location.UPPER_Y_VALUE; y++)
     			for (int z=-1; z<=1; z++) {
     				vecino = new Location (mercury,x,y,z);
-    				if ((x<0) || (y<Location.UPPER_Y_VALUE-1) || (z<0)) 
-    					assertFalse ("No adyacente en mercury"+vecino.toString(), adyacentes.contains(vecino));
+    				if ((x>=0) && (x<=1) && (y>=Location.UPPER_Y_VALUE-1) && (y<=Location.UPPER_Y_VALUE+1) && (z>=0) && (z<=1) 
+    						 && (!vecino.equals(center)) )
+    					assertTrue ("Adyacente "+vecino.toString(), adyacentes.contains(vecino));
+    				else
+    					assertFalse ("Adyacente "+vecino.toString(), adyacentes.contains(vecino));
     			}
     				
     }
@@ -346,33 +271,16 @@ public class Location_P2Test {
     	Set<Location> adyacentes = center.getNeighborhood(); 
     	
     	for (int x=-1; x<=1; x++) 
-    		for (int y=(int)Location.UPPER_Y_VALUE-1; y<=Location.UPPER_Y_VALUE+1; y++)
+    		for (int y=0; y<=Location.UPPER_Y_VALUE; y++)
     			for (int z=-1; z<=1; z++) {
     				vecino = new Location (null,x,y,z);
-    				if (!vecino.equals(center)) 
-    					assertTrue ("Adyacente mundo null"+vecino.toString(), adyacentes.contains(vecino));
+    				if ((x>=-1) && (x<=1) && (y>=Location.UPPER_Y_VALUE-1) && (y<=Location.UPPER_Y_VALUE+1) && (z>=-1) && (z<=1) 
+    						 && (!vecino.equals(center)) )
+    					assertTrue ("Adyacente "+vecino.toString(), adyacentes.contains(vecino));
+    				else
+    					assertFalse ("Adyacente "+vecino.toString(), adyacentes.contains(vecino));
     			}
     				
     }
-
-    /*
-     * Prueba de las posiciones NO adyacentes en posiciones que no pertenecen a un mundo.
-     */
-    @Test
-    public final void testGetNeighborhoodOutNullWorld() {
-    	
-    	Location center = new Location(null, 0.0, Location.UPPER_Y_VALUE, 0.0);
-    	Location vecino;
-    	Set<Location> adyacentes = center.getNeighborhood(); 
-    	
-    	for (int x=-2; x<=2; x++) 
-    		for (int y=0; y<=Location.UPPER_Y_VALUE; y++)
-    			for (int z=-2; z<=2; z++) {
-    				vecino = new Location (null,x,y,z);
-    				if ((x<-1) || (x>1) || (y<Location.UPPER_Y_VALUE-1) || (y>Location.UPPER_Y_VALUE+1) || (z<-1) || (z>1) )
-    					assertFalse ("No adyacente mundo null"+vecino.toString(), adyacentes.contains(vecino));
-    			}
-    				
-    }
-
+    
 }

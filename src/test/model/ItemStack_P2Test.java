@@ -1,21 +1,13 @@
 package test.model;
-
 import model.*;
 import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
-
-
 
 import model.exceptions.StackSizeException;
 
 public class ItemStack_P2Test {
-
-    @Rule
-    public Timeout globalTimeout = Timeout.seconds(2);
 
 	ItemStack is;
 	
@@ -29,6 +21,7 @@ public class ItemStack_P2Test {
 	@Test
 	public void testConstructorItemStackAndGetters() {
 		try {
+			is = new ItemStack(Material.APPLE, ItemStack.MAX_STACK_SIZE);
 			assertEquals ("is.type = APPLE", Material.APPLE, is.getType());
 			assertEquals ("is.amount = 10", 64, is.getAmount());
 		} catch (Exception e) {
@@ -49,43 +42,29 @@ public class ItemStack_P2Test {
 		 new ItemStack(Material.BREAD, ItemStack.MAX_STACK_SIZE+1);	
 	}
 
-
-	/* comprueba: 
-	  Si amount>1: lanza excepción si type no es comida o bloque */ 
+	/*Para todas las materias comprueba: 
+	  Si amount>1: lanza excepción si type no es comida o bloque y no debe lanzarla si lo es.*/ 
 	@Test 
 	public void testConstructorItemStackthrowException3()  {
 		 for (Material type : Material.values()) { 
 				try {
 					is = null;
 					is = new ItemStack(type, 2);
-					if (type.ordinal()>=12) {
+					if ( (type.ordinal()>=12) && (type.ordinal()<=15) ) {
 						fail ("Error: "+type.name()+" en tu enumerado es una herramienta o arma y amount=2. "
 								+ " Debía haber lanzado la excepción StackSizeException");
 					}
-				} catch (StackSizeException e) {
-					// OK!
-				} catch (Exception e)  {
-					fail ("Error: Debía haber lanzado la excepción StackSizeException y ha lanzado "+e.getClass().getName());
-				}		
-		 }
-	}
-	
-	/* Comprueba: 
-	  Si amount>1: El ctor no lanza excepción si el material es de tipo comida o bloque.*/ 
-	@Test 
-	public void testConstructorItemStackDoesNotThrows()  {
-		 for (Material type : Material.values()) { 
-				try {
-					is = null;
-					is = new ItemStack(type, 2);
-					if (type.ordinal()<12) { //Es una materia de bloque o comida
-						// assertNotNull(is);
+					else { //Es una materia de bloque o comida
+						assertNotNull(is);
 						assertEquals ("is.type = type", type, is.getType());
 						assertEquals ("is.amount = 2", 2, is.getAmount());
 						assertTrue("Es bloque o comida", type.isBlock()||type.isEdible());
 					}
 				} catch (StackSizeException e) {
-					if (type.ordinal()<12) {
+					if (type.ordinal()>=12) {
+					   assertNull(is);
+					}
+					else {
 						fail ("Error: "+ type.name()+" NO es una herramienta o arma en tu enumerado y amount=2. No debía haber "
 								+ "lanzado la excepción StackSizeException");
 					}
@@ -94,7 +73,11 @@ public class ItemStack_P2Test {
 				}		
 		 }
 	}
-
+	
+	@Test (expected = StackSizeException.class)
+	public void testConstructorItemStackthrowException4() throws StackSizeException {
+		 new ItemStack(Material.BEEF, ItemStack.MAX_STACK_SIZE+1);	
+	}
 	
 	@Test
 	public void testConstructorCopiaItemStack() {
@@ -108,7 +91,7 @@ public class ItemStack_P2Test {
 		assertEquals ("newIs.amount = MAX_STACK_SIZE", ItemStack.MAX_STACK_SIZE, newIs.getAmount());
 	}
 
-	/* Comprueba que setAmount acepta en amount valores > 1 para todos los materiales que son
+	/* Comprueba que setAmount pone en amount valores > 1 para todos los materiales que son
 	   material de bloque o comida y no lanza ninguna excepción */
 	@Test
 	public void testSetAmountOk() {
@@ -121,28 +104,13 @@ public class ItemStack_P2Test {
 					is.setAmount(ordinal+2);
 					assertEquals ("is.amount > 1",ordinal+2,is.getAmount());
 				}
-			} catch (Exception e) {
-				fail("No debía haber lanzado la excepción "+e.getClass().getName()+ "\n Material "+type+" amount = "+(ordinal+2));
-			}
-		}
-	}
-
-	/* Comprueba que setAmount acpeta en amount valores == 1 para herramientas o armas y no lanza ninguna excepción */
-	@Test
-	public void testSetAmountOk2() {
-		int ordinal=0;
-		for (Material type: Material.values()) {
-			try {
-				ordinal = type.ordinal();
-				is = new ItemStack(type,1);
-				if (ordinal>=12)  // herramienta o arma
+				else //arma o herramienta
 				  assertEquals ("is.amount = 1",1,is.getAmount());
 			} catch (Exception e) {
 				fail("No debía haber lanzado la excepción "+e.getClass().getName()+ "\n Material "+type+" amount = "+(ordinal+2));
 			}
 		}
 	}
-
 	
 	// Prueba la excepción StackSizeException de setAmount para amount <1
 	@Test (expected = StackSizeException.class)
@@ -167,7 +135,7 @@ public class ItemStack_P2Test {
 			try {
 				ordinal = type.ordinal();
 				is = new ItemStack(type,1);
-				if (ordinal>=12) { //Herramienta o arma
+				if ( (ordinal>=12) && (ordinal<=15) ) { //Herramienta o arma
 					is.setAmount(ordinal-10);
 					fail("Error: Debía haber lanzado la excepción StackSizeException \n"+type+" amount = "+(ordinal-10));
 				}

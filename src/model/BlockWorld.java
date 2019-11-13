@@ -3,7 +3,12 @@
  */
 package model;
 
+import model.entities.*;
 import model.exceptions.*;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
 
 /**
  * The class BlockWorld represents the whole game and its basic functionality;
@@ -63,7 +68,7 @@ public class BlockWorld {
     public String showPlayerInfo(Player player) {
         String info;
         try {
-            info= player.toString() + "\n"
+            info = player.toString() + "\n"
                     + player.getLocation().getWorld().getNeighbourhoodString(player.getLocation());
 
         } catch (BadLocationException ex) {
@@ -74,6 +79,7 @@ public class BlockWorld {
 
     /**
      * It moves the player to the adjacent location (x+dx,y+dy,z+dz) and makes him or her collect the items in that location, if any.
+     * It take sinto account that the player can go through liquid blocks and that they can damage the payer when going through them.
      *
      * @param p  player instance to be moved.
      * @param dx movement in the x axis.
@@ -83,7 +89,13 @@ public class BlockWorld {
      * @throws BadLocationException  if the target location is not adjacent to the current one, is occupied or is not valid.
      */
     public void movePlayer(Player p, int dx, int dy, int dz) throws BadLocationException, EntityIsDeadException {
+
         p.move(dx, dy, dz);
+        if (world.getBlockAt(p.getLocation()) != null) {
+            if (world.getBlockAt(p.getLocation()).getType().isLiquid())
+                p.damage(world.getBlockAt(p.getLocation()).getType().getValue());
+        }
+
         if (world.getItemsAt(p.getLocation()) != null) {
             p.addItemsToInventory(world.getItemsAt(p.getLocation()));
             world.removeItemsAt(p.getLocation());
@@ -110,7 +122,139 @@ public class BlockWorld {
      * @throws IllegalArgumentException if the argument ‘times’ is less than or equal to zero.
      */
     public void useItem(Player p, int times) throws EntityIsDeadException, IllegalArgumentException {
-        p.useItemInHand(times);
+
+        ItemStack usedItem = p.useItemInHand(times);
+        ItemStack drop = null;
+        Location loc = p.getOrientation();
+        double damage;
+        if (usedItem != null) {
+            damage = usedItem.getType().getValue() * times;
+
+            try {
+                if (!world.isFree(loc)) {
+                    if (world.getBlockAt(loc) instanceof SolidBlock) {
+                        if (damage >= world.getBlockAt(loc).getType().getValue())
+                            drop = ((SolidBlock) world.getBlockAt(loc)).getDrops();
+                        world.destroyBlockAt(loc);
+                        world.addItems(loc, drop);
+
+                    } else if (world.getCreatureAt(loc) != null) {
+                        Creature creature;
+                        world.getCreatureAt(loc).damage(damage);
+                        if ((creature = world.getCreatureAt(loc)) instanceof Animal) {
+                            if (creature.isDead()) {
+                                drop = ((Animal) creature).getDrop();
+                                world.killCreature(loc);
+                                world.addItems(loc, drop);
+                            }
+                        }
+                        if ((creature = world.getCreatureAt(loc)) instanceof Monster) {
+                            if (creature.isDead()) {
+                                world.killCreature(loc);
+                            } else {
+                                p.damage(0.5 * times);
+
+                            }
+
+                        }
+
+                    }
+
+                } else if (!world.isFree(loc) && usedItem.getType().isBlock()) {
+                    world.addBlock(loc, new SolidBlock(usedItem.getType()) {
+                    });
+                }
+            } catch (BadLocationException | WrongMaterialException ex) {
+                System.err.println(ex.getMessage());
+            }
+
+        }
+
     }
 
+    /**
+     * Calls the player’s orientate() method in order to orientate the player.
+     *
+     * @param p  player
+     * @param dx x-axis coordinate
+     * @param dy y-axis coordinate
+     * @param dz z-axis coordinate
+     * @throws BadLocationException  If dx==dy==dz==0 (a player cannot be oriented towards himself) or
+     *                               the orientation is not towards an adjacent location
+     * @throws EntityIsDeadException Exception if the player to be orientated is dead.
+     */
+    public void orientatePlayer(Player p, int dx, int dy, int dz) throws BadLocationException, EntityIsDeadException {
+        p.orientate(dx, dy, dz);
+    }
+
+    /**
+     * Opens the given input file and executes each one of its commands (by calling play(Scanner)).
+     * @param path path to the document
+     * @throws FileNotFoundException if the file is not found.
+     */
+    public void playFile(String path) throws FileNotFoundException {
+        Scanner fileScanner = new Scanner(new File(path));
+        play(fileScanner);
+
+    }
+
+    /**
+     *  Creates the scanner that reads from the standard input the commands to be executed.
+     */
+    public void playFromConsole() {
+        Scanner consoleScanner = new Scanner(System.in);
+        play(consoleScanner);
+
+    }
+
+    /**
+     * Executes the commands it reads, line by line, from the Scanner object passed as argument.
+     *  It catches the exceptions that may occur during the execution of these commands,
+     *  printing the exception message to the error output.
+     *  If an unknown command is found, it displays an appropriate error message through the error output
+     *  and continues reading the next command. It stops reading from the Scanner object if
+     *  there is nothing left to read or the player has died.
+     * @param sc scanner
+     */
+    public void play(Scanner sc) {
+
+        String[] worldInfo = sc.nextLine().split(" ", 3);
+        createWorld(Long.parseLong(worldInfo[0]), Integer.parseInt(worldInfo[1]), worldInfo[2]);
+
+        while (sc.hasNextLine() && !world.getPlayer().isDead()) {
+            try {
+                String line = sc.nextLine();
+                Scanner lineScanner = new Scanner(line);
+                String command = lineScanner.next();
+
+                switch (command) {
+                    case "move":
+                        movePlayer(world.getPlayer(), lineScanner.nextInt(), lineScanner.nextInt(), lineScanner.nextInt());
+                        break;
+                    case "orientate":
+                        orientatePlayer(world.getPlayer(), lineScanner.nextInt(), lineScanner.nextInt(), lineScanner.nextInt());
+                        break;
+                    case "useItem":
+                        useItem(world.getPlayer(), lineScanner.nextInt());
+                        break;
+                    case "show":
+                        System.out.println(showPlayerInfo(world.getPlayer()));
+                        break;
+                    case "selectItem":
+                        selectItem(world.getPlayer(), lineScanner.nextInt());
+                        break;
+                    default:
+                        throw new UnknownGameCommandException(command);
+
+                }
+
+
+            } catch (Exception ex) {
+                //  ex.printStackTrace();
+                System.err.println(ex.getMessage());
+            }
+
+        }
+    }
 }
+

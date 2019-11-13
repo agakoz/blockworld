@@ -1,13 +1,9 @@
 package test.model;
-
 import model.*;
 import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
-
 
 /**
  * 
@@ -17,10 +13,6 @@ import org.junit.rules.Timeout;
 
 public class World_P1Test {
 
-    @Rule
-    public Timeout globalTimeout = Timeout.seconds(5);
-
-	
 	World w, other;
 
 	/*
@@ -29,8 +21,8 @@ public class World_P1Test {
 	 */
 	@Before
 	public void setUp() {
-		w = new World("Earth");
-		other = new World("Mars");
+		w = new World(1,100,"Earth");
+		other = new World(2,100,"Mars");
 
 	}
 
@@ -40,7 +32,7 @@ public class World_P1Test {
 		assertEquals("Name Mars", "Mars", other.getName());
 		
 		// NEW
-		w = new World(null);
+		w = new World(1,100,null);
 		assertNull(w.getName());
 	}
 
@@ -50,7 +42,7 @@ public class World_P1Test {
 		assertEquals("Name Mars", "Mars", other.toString());
 		
 		// NEW
-		World other = new World("A wonderful World");
+		World other = new World(1,100,"A wonderful World");
 		assertNotEquals(w.toString(), other.toString());
 	}
 

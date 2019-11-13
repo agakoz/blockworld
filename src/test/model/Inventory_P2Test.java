@@ -1,29 +1,23 @@
 package test.model;
-
 import model.*;
 import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
-
-
 
 import model.exceptions.BadInventoryPositionException;
+import model.exceptions.StackSizeException;
 
 public class Inventory_P2Test {
-
-    @Rule
-    public Timeout globalTimeout = Timeout.seconds(2);
 
 	Inventory inventory;
 	final static  Material materias[] = { Material.BEDROCK, Material.CHEST, Material.SAND, Material.DIRT, Material.GRASS, 
 			Material.STONE, Material.GRANITE, Material.OBSIDIAN, Material.WATER_BUCKET, 
 			Material.APPLE, Material.BREAD, Material.BEEF, Material.IRON_SHOVEL,Material.IRON_PICKAXE, 
-			Material.WOOD_SWORD, Material.IRON_SWORD, };
-	final String invOut = "(inHand=(GRASS,5),[(BEDROCK,1), (CHEST,2), (SAND,3), (DIRT,4), (GRASS,5), (STONE,6), (GRANITE,7), (OBSIDIAN,8), (WATER_BUCKET,9), (APPLE,10), (BREAD,11), (BEEF,12), (IRON_SHOVEL,1), (IRON_PICKAXE,1), (WOOD_SWORD,1), (IRON_SWORD,1)])";
+			Material.WOOD_SWORD, Material.IRON_SWORD,Material.LAVA, Material.WATER  };
+	final String invOut = "(inHand=(GRASS,5),[(BEDROCK,1), (CHEST,2), (SAND,3), (DIRT,4), (GRASS,5), (STONE,6), (GRANITE,7), (OBSIDIAN,8), "
+			+ "(WATER_BUCKET,9), (APPLE,10), (BREAD,11), (BEEF,12), (IRON_SHOVEL,1), (IRON_PICKAXE,1), (WOOD_SWORD,1), (IRON_SWORD,1), (LAVA,16), (WATER,17)])";
 	ItemStack isApple,isGrass;
 	
 	@BeforeClass
@@ -66,10 +60,10 @@ public class Inventory_P2Test {
 	public void testAddItemWithRepeatedItems() {
 	 	
 		inventory = makeInventory(3);
-		for (int i=0; i<=15; i++) {
-			assertEquals("item["+i+"]==item["+i+16+"]",
-					inventory.getItem(i),inventory.getItem(i+16));
-			assertEquals("item["+i+"]==item["+i+32+"]",inventory.getItem(i),inventory.getItem(i+32));
+		for (int i=0; i<=17; i++) {
+			assertEquals("item["+i+"]==item["+i+18+"]",
+					inventory.getItem(i),inventory.getItem(i+18));
+			assertEquals("item["+i+"]==item["+i+36+"]",inventory.getItem(i),inventory.getItem(i+36));
 		}
 	}
 
@@ -92,33 +86,35 @@ public class Inventory_P2Test {
 				fail("Error: excepción "+e.getClass().toString()+" inesperada");
 			}	
 		 }
-		
+		try {
+			isOut = new ItemStack(materias[16], 16);
+			assertEquals ("getItem(16) == "+isOut.toString(), isOut, inventory.getItem(16)); //LAVA
+			isOut = new ItemStack(materias[17], 17); //WATER
+			assertEquals ("getItem(17) == "+isOut.toString(), isOut, inventory.getItem(17));
+		} catch (StackSizeException e) {
+			fail("Error: excepción "+e.getClass().toString()+" inesperada");
+		}
 	}
 	
-	/* Prueba getItem para inventory vacío  */
+	/* Prueba getItem para inventory vacío e índices fuera del tamaño del 
+	  inventario */
 	@Test
 	public void testGetItemNull() {
 		assertNull(inventory.getItem(0)); //inventory vacío
-			
-	}
-
-	/* Prueba getItem para índices fuera del tamaño del 
-	  inventario */
-	@Test
-	public void testGetItemOutOfRange() {
 		
 	    inventory = makeInventory(1);
-		assertNull(inventory.getItem(16));
+		assertNull(inventory.getItem(18));
 		assertNull(inventory.getItem(-1));
 		
+		
 	}
-
-	/* Borra un inventario con 32 elementos  */
+	
+	/* Borra un inventario con 36 elementos  */
 	@Test
 	public void testClear() {
 	  
 	   inventory = makeInventory(2);
-	   assertEquals("size=32",32,inventory.getSize());
+	   assertEquals("size=36",36,inventory.getSize());
 	   inventory.clear();	
 	   assertEquals("size=0",0,inventory.getSize());
 	 
@@ -133,7 +129,7 @@ public class Inventory_P2Test {
 		inventory = makeInventory(1);
 		
 		try {
-			for (int i=15; i>=0; i-- ) {
+			for (int i=17; i>=0; i-- ) {
 				isApple = inventory.getItem(i);
 				assertNotNull(isApple );
 				inventory.clear(0);
@@ -150,44 +146,32 @@ public class Inventory_P2Test {
 	public void testClearIntException() throws BadInventoryPositionException {
 	 
 		inventory = makeInventory(1);
-	    inventory.clear(16);
+	    inventory.clear(18);
 	}
 
-	//First en inventario vacío.
-	@Test
-	public void testFirstVacio() {
-		//Inventory vacío
-		assertEquals(-1, inventory.first(Material.BEDROCK));
-		
-	}
-
-	//First sin repetición de elementos.
-	@Test
-	public void testFirst1() {
-		inventory= makeInventory(1);
-
-		for (int i=0;i<=15; i++) {
-			assertEquals(i,inventory.first(materias[i]));
-		}
-		
-	}
-
-	// First en elemento eliminado.
+	//First sin repetición de elementos. First en elemento que no existe.
 	@Test
 	public void testFirst1AndClearInt() {
+		//Inventory vacío
+		assertEquals(-1, inventory.first(Material.BEDROCK));
 		inventory= makeInventory(1);
 
+		for (int i=0;i<=17; i++) {
+			assertEquals(i,inventory.first(materias[i]));
+		}
 		try {
 			inventory.clear(9);  //Borramos APPLE
 			assertEquals(-1, inventory.first(Material.APPLE));
 			inventory.clear(14); //Borramos IRON_SWORD (estará 1 posición menos)
 			assertEquals(-1, inventory.first(Material.IRON_SWORD));
+			inventory.clear(14); //Borramos LAVA (estará 2 posiciones menos que la original)
+			assertEquals(-1, inventory.first(Material.LAVA));
+			
 		} catch (Exception e) {
 			fail("Error: excepción "+e.getClass().toString()+" inesperada");
 		} 
 		
 	}
-
 
 	/*First en inventario con 3 repeticiones de items.
 	*/
@@ -199,17 +183,19 @@ public class Inventory_P2Test {
 		assertEquals(5,inventory.first(Material.STONE));
 		assertEquals(15,inventory.first(Material.IRON_SWORD));
 		try {
-			inventory.clear(15);  //Borramos el primer IRON_SWORD;
-			assertEquals(30,inventory.first(Material.IRON_SWORD));
-			inventory.clear(30);  //Borramos el segundo IRON_SWORD;
-			assertEquals(45,inventory.first(Material.IRON_SWORD));
-			inventory.clear(45);  //Borramos el último IRON_SWORD;
-			assertEquals(-1,inventory.first(Material.IRON_SWORD));
+			inventory.clear(17);  //Borramos el primer WATER;
+			assertEquals(34,inventory.first(Material.WATER));
+			inventory.clear(34);  //Borramos el segundo WATER;
+			assertEquals(51,inventory.first(Material.WATER));
+			inventory.clear(51);  //Borramos el último WATER;
+			assertEquals(-1,inventory.first(Material.WATER));
 			
 		} catch (Exception e) {
 			fail("Error: excepción "+e.getClass().toString()+" inesperada");
 		} 
 	}
+	
+	
 	
 	//Comprobamos setItemInHand y GetItemInHand
 	@Test
@@ -218,15 +204,9 @@ public class Inventory_P2Test {
 		inventory.setItemInHand(isApple );
 		assertSame(isApple ,inventory.getItemInHand());
 		
+		inventory.setItemInHand(null);
+		assertNull(inventory.getItemInHand());
 	}
-
-	//Comprobamos setItemInHand y GetItemInHand
-		@Test
-		public void testSetAndGetItemInHandNull() {
-					
-			inventory.setItemInHand(null);
-			assertNull(inventory.getItemInHand());
-		}
 
 	/* Comprueba getSize() para un inventario vacío y para un inventario
 	 * con 160 elementos.
@@ -238,7 +218,7 @@ public class Inventory_P2Test {
 		
 		//Incluimos 10 veces todos los materiales en el inventario
 		inventory=makeInventory(10);	
-		assertEquals(160,inventory.getSize());
+		assertEquals(180,inventory.getSize());
 		
 		
 	}
@@ -248,7 +228,7 @@ public class Inventory_P2Test {
 	public void testSetItem() {
 	
 		inventory = makeInventory(1);
-		for (int i=0; i<=15; i++)
+		for (int i=0; i<=17; i++)
 			try {
 				inventory.setItem(i,isApple );
 				assertEquals(isApple , inventory.getItem(i));
@@ -257,7 +237,7 @@ public class Inventory_P2Test {
 			}
 	}
 
-	//Excepción al intentar poner un item en una posición en un inventario vac´io
+	//Excepción al intentar poner un item en una posición en un inventario vacío
 	@Test(expected=BadInventoryPositionException.class)
 	public void testSetItemException1() throws BadInventoryPositionException {
 		inventory.setItem(0, isApple );
@@ -267,7 +247,7 @@ public class Inventory_P2Test {
 	@Test(expected=BadInventoryPositionException.class)
 	public void testSetItemException2() throws BadInventoryPositionException {
 		inventory = makeInventory(1);
-		inventory.setItem(16, isApple );
+		inventory.setItem(18, isApple );
 	}
 	
 	//Prueba toString() con un inventario vacío e inHand a null.
@@ -371,6 +351,11 @@ public class Inventory_P2Test {
 		      isaux = new ItemStack(materias[i],1);
 			  inv.addItem(isaux);
 		   }
+		   
+		   for (int i=16; i<=17; i++) { //Para liquid blocks
+			      isaux = new ItemStack(materias[i],i);
+				  inv.addItem(isaux);
+			   }
 		 }
 		} catch (Exception ex) {
 			throw new RuntimeException();

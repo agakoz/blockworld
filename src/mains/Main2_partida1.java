@@ -1,12 +1,11 @@
 /**
- * 
+ * main for second assignment
  */
 package mains;
 
 import model.BlockWorld;
-import model.Player;
+import model.entities.Player;
 import model.World;
-import model.exceptions.BadInventoryPositionException;
 import model.exceptions.BadLocationException;
 import model.exceptions.EntityIsDeadException;
 
@@ -17,7 +16,7 @@ import model.exceptions.EntityIsDeadException;
 public final class Main2_partida1 {
 
 	/**
-	 * @param args
+	 * @param args to start main
 	 */
 	public static void main(String[] args) {
 		BlockWorld game = BlockWorld.getInstance();	

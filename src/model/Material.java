@@ -11,24 +11,78 @@ import java.util.*;
  */
 public enum Material {
     /**
-     * constants, indicating type of material and assigned to them values and symbols.
+     * Material BEDROCK specified.
      */
     BEDROCK(-1, '*'),
+    /**
+     * Material CHEST specified.
+     */
     CHEST(0.1, 'C'),
-    SAND(0.5, 'a'),
+    /**
+     * Material SAND specified.
+     */
+    SAND(0.5, 'n'),
+    /**
+     * Material DIRT specified.
+     */
     DIRT(0.5, 'd'),
+    /**
+     * Material GRASS specified.
+     */
     GRASS(0.6, 'g'),
+    /**
+     * Material STONE specified.
+     */
     STONE(1.5, 's'),
+    /**
+     * Material GRANITE specified.
+     */
     GRANITE(1.5, 'r'),
+    /**
+     * Material OBSIDIAN specified.
+     */
     OBSIDIAN(5, 'o'),
+    /**
+     * Material WATER_BUCKET specified.
+     */
     WATER_BUCKET(1, 'W'),
+    /**
+     * Material APPLE specified.
+     */
     APPLE(4, 'A'),
+    /**
+     * Material BREAD specified.
+     */
     BREAD(5, 'B'),
+    /**
+     * Material BEEF specified.
+     */
     BEEF(8, 'F'),
+    /**
+     * Material IRON_SHOVEL specified.
+     */
     IRON_SHOVEL(0.2, '>'),
+    /**
+     * Material IRON_PICKAXE specified.
+     */
     IRON_PICKAXE(0.5, '^'),
+    /**
+     * Material WOOD_SWORD specified.
+     */
     WOOD_SWORD(1, 'i'),
-    IRON_SWORD(2, 'I');
+    /**
+     * Material IRON_SWORD specified.
+     */
+    IRON_SWORD(2, 'I'),
+    /**
+     * Material LAVA specified.
+     */
+    LAVA(1.0, '#'),
+    /**
+     * Material WATER specified.
+     */
+    WATER(0.0, '@');
+
 
     /**
      * indicates the value of each material.
@@ -60,11 +114,15 @@ public enum Material {
      * @return true if the material is a block, false if not.
      */
     public boolean isBlock() {
-        if (symbol == '*' || symbol == 'C' || symbol == 'a' || symbol == 'd' || symbol == 'g' || symbol == 's' || symbol == 'r' || symbol == 'o')
-            return true;
-        else
-            return false;
+        return (symbol == '#' || symbol == '@' || symbol == '*' || symbol == 'C' || symbol == 'n' || symbol == 'd'
+                || symbol == 'g' || symbol == 's' || symbol == 'r' || symbol == 'o');
+
     }
+
+    public boolean isLiquid() {
+        return (symbol == '#' || symbol == '@');
+    }
+
 
     /**
      * It indicates whether the material is food or not by comparing assigned unique symbols.
@@ -72,10 +130,8 @@ public enum Material {
      * @return true if the material is food, false if not.
      */
     public boolean isEdible() {
-        if (symbol == 'W' || symbol == 'A' || symbol == 'B' || symbol == 'F')
-            return true;
-        else
-            return false;
+        return (symbol == 'W' || symbol == 'A' || symbol == 'B' || symbol == 'F');
+
     }
 
     /**
@@ -84,10 +140,8 @@ public enum Material {
      * @return true if the material is a tool, false if not.
      */
     public boolean isTool() {
-        if (symbol == '^' || symbol == '>')
-            return true;
-        else
-            return false;
+        return (symbol == '^' || symbol == '>');
+
     }
 
     /**
@@ -96,10 +150,7 @@ public enum Material {
      * @return true if the material is a weapon, false if not.
      */
     public boolean isWeapon() {
-        if (symbol == 'i' || symbol == 'I')
-            return true;
-        else
-            return false;
+        return (symbol == 'i' || symbol == 'I');
     }
 
     /**

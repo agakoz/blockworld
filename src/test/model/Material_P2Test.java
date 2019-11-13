@@ -1,26 +1,19 @@
 package test.model;
-
 import model.*;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
-
 
 public class Material_P2Test {
-
-    @Rule
-    public Timeout globalTimeout = Timeout.seconds(2);
 
 	final  Material typesAlumno[]=Material.values();
 	final  Material materias[] = { Material.BEDROCK, Material.CHEST, Material.SAND, Material.DIRT, Material.GRASS, 
 			Material.STONE, Material.GRANITE, Material.OBSIDIAN, Material.WATER_BUCKET, 
 			Material.APPLE, Material.BREAD, Material.BEEF, Material.IRON_SHOVEL,Material.IRON_PICKAXE, 
-			Material.WOOD_SWORD, Material.IRON_SWORD, };
+			Material.WOOD_SWORD, Material.IRON_SWORD, Material.LAVA, Material.WATER };
 	
-	final double values[]= {-1, 0.1, 0.5, 0.5, 0.6, 1.5, 1.5, 5, 1, 4, 5, 8, 0.2, 0.5, 1, 2};
-	final char symbols[]= {'*','C','a','d','g','s','r','o','W','A','B','F','>','^','i','I'};
+	final double values[]= {-1, 0.1, 0.5, 0.5, 0.6, 1.5, 1.5, 5, 1, 4, 5, 8, 0.2, 0.5, 1, 2, 1.0, 0.0};
+	final char symbols[]= {'*','C','n','d','g','s','r','o','W','A','B','F','>','^','i','I', '#', '@'};
 
 	//Comprueba el orden de los tipos de materias del Enum del alumno
 	@Test
@@ -32,8 +25,8 @@ public class Material_P2Test {
 
 	@Test
 	public void testIsBlock() {
-		for (int i = 0; i<=15;i++) {
-		  if ( (i>=0) && (i<=7) )
+		for (int i = 0; i<=17;i++) {
+		  if (( (i>=0) && (i<=7) )|| (i>15) )
 			  assertTrue(materias[i].isBlock());
 		  else 
 			  assertFalse(materias[i].isBlock());
@@ -42,7 +35,7 @@ public class Material_P2Test {
 
 	@Test
 	public void testIsEdible() {
-		for (int i = 0; i<=15;i++) {
+		for (int i = 0; i<=17;i++) {
 			  if ( (i>=8) && (i<=11) )
 				  assertTrue(materias[i].isEdible());
 			  else 
@@ -52,7 +45,7 @@ public class Material_P2Test {
 	
 	@Test
 	public void testIsTool() {
-		for (int i = 0; i<=15;i++) {
+		for (int i = 0; i<=17;i++) {
 			  if ( (i>=12) && (i<=13) )
 				  assertTrue(materias[i].isTool());
 			  else 
@@ -62,32 +55,41 @@ public class Material_P2Test {
 
 	@Test
 	public void testIsWeapon() {
-		for (int i = 0; i<=15;i++) {
+		for (int i = 0; i<=17;i++) {
 			  if ( (i>=14) && (i<=15) )
 				  assertTrue(materias[i].isWeapon());
 			  else 
 				  assertFalse(materias[i].isWeapon());
 		}
 	}
-
+	
+	@Test
+	public void testIsLiquid() {
+		for (int i = 0; i<=17;i++) {
+			  if ( (i>=16) && (i<=17) )
+				  assertTrue(materias[i].isLiquid());
+			  else 
+				  assertFalse(materias[i].isLiquid());
+		}
+	}
 	
 	@Test
 	public void testGetValue() {
-		for (int i = 0; i<=15;i++) {
+		for (int i = 0; i<=17;i++) {
 			  assertEquals ("Value["+i+"] == getValue()", values[i], materias[i].getValue(),0.01);
 		}
 	}
 
 	@Test
 	public void testGetSymbol() {
-		for (int i = 0; i<=15;i++){
+		for (int i = 0; i<=17;i++){
 				  assertEquals ("symbol["+i+"] == getSymbol()",symbols[i], materias[i].getSymbol());
 			}
 	}
 
 	@Test
 	public void testGetRandomItem1() {
-		for (int i = 0; i<=15;i++) {
+		for (int i = 0; i<=17;i++) {
 			Material mat = Material.getRandomItem(i,i);
 			assertTrue (materias[i]==mat);
 		}
@@ -96,8 +98,7 @@ public class Material_P2Test {
 	//Indices fuera del rango
 	@Test(expected = ArrayIndexOutOfBoundsException.class)
 	public void testGetRandomItem2() {
-		
-			 Material.getRandomItem(16,17);
+			 Material.getRandomItem(18,19);
 	}
 	
 	//Indices fuera del rango

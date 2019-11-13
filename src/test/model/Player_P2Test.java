@@ -1,37 +1,33 @@
 package test.model;
-
 import model.*;
 import static org.junit.Assert.*;
 
 import java.lang.reflect.Field;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
 
-
+import model.entities.Player;
 import model.exceptions.BadInventoryPositionException;
 import model.exceptions.BadLocationException;
 import model.exceptions.EntityIsDeadException;
 import model.exceptions.StackSizeException;
 
 public class Player_P2Test {
-	
-    @Rule
-    public Timeout globalTimeout = Timeout.seconds(5);
-	
 	final String outInitialPlayer = "Name=Peter\n"+
 			"Location{world=Mercury,x=0.0,y=71.0,z=0.0}\n"+
+			"Orientation=Location{world=Mercury,x=0.0,y=0.0,z=1.0}\n"+
 			"Health=20.0\n"+
 			"Food level=20.0\n"+
 			"Inventory=(inHand=(WOOD_SWORD,1),[])\n";
 	final String outPlayer = "Name=Peter\n"+
-			"Location{world=Mercury,x=1.0,y=71.0,z=1.0}\n"+
+			"Location{world=Mercury,x=1.0,y=71.0,z=1.0}\n"+ 
+	"Orientation=Location{world=Mercury,x=0.0,y=0.0,z=1.0}\n"+
 	"Health=10.0\n"+
 	"Food level=3.95\n"+
 	"Inventory=(inHand=(BREAD,5),[(BEDROCK,5), (CHEST,5), (SAND,5), (DIRT,5), "+
 	"(GRASS,5), (STONE,5), (GRANITE,5), (OBSIDIAN,5), (WATER_BUCKET,5), (APPLE,5), "+
-	"(WOOD_SWORD,1), (BEEF,5), (IRON_SHOVEL,1), (IRON_PICKAXE,1), (WOOD_SWORD,1), (IRON_SWORD,1)])";
+	"(WOOD_SWORD,1), (BEEF,5), (IRON_SHOVEL,1), (IRON_PICKAXE,1), (WOOD_SWORD,1), (IRON_SWORD,1), "
+	+ "(LAVA,5), (WATER,5)])";
 
 	Player player, playerNull;
 	static World mercury;
@@ -188,16 +184,17 @@ public class Player_P2Test {
 		try {
 						
 			player.setFoodLevel(0.05);
+			
 			newpos=player.move(1, 1, 0);
 			assertEquals("Nueva posición",newpos, player.getLocation());
 			assertEquals("Deja a food en 0.0", 0.0, player.getFoodLevel(),0.01);
 			assertEquals("Health sigue a 20", 20.0, player.getHealth(),0.01);
-					
+			
 			newpos=player.move(0, 0, 1);
 			assertEquals("Nueva posición",newpos, player.getLocation());
 			assertEquals("food se queda en 0.0", 0.0, player.getFoodLevel(),0.01);
 			assertEquals("Health baja a 19.95", Player.MAX_HEALTH-0.05, player.getHealth(),0.01);
-					
+			
 			newpos=player.move(0, -1, 0);
 			assertEquals("Nueva posición",newpos, player.getLocation());
 			assertEquals("food se queda en 0.0", 0.0, player.getFoodLevel(),0.01);
@@ -280,7 +277,7 @@ public class Player_P2Test {
 	
 	//Pruebas 1 con useItemInHand
 	@Test
-	public void testUseItemInHand1()  {
+	public void testUseItemInHand1() {
 		try {
 			ItemStack food = new ItemStack(Material.BEEF,5);
 			ItemStack tool = new ItemStack(Material.IRON_PICKAXE,1);
@@ -666,7 +663,7 @@ public class Player_P2Test {
 	/* Testamos hasCode() con los atributos que intervienen, comprobando que si modificamos alguno
 	 * los codes son distintos */
 	@Test
-	public void testHashCode() throws RuntimeException {
+	public void testHashCode() throws RuntimeException{
 		Player player2 = new Player("Peter",mercury);
 		assertEquals("Codes iguales para players iguales",player.hashCode(),player2.hashCode());
 		//Modificamos algún atributo:
@@ -713,31 +710,17 @@ public class Player_P2Test {
 		}		
 	}
 	
-	/******************************************************************/
+	/***********************************************************/
 	//FUNCION DE APOYO
-	/* Se usa para comparar Strings que devuelven algunos métodos. Evita sacar error por los espacios
-	 * finales de cada línea y por los saltos de línea al final
+	/* Se usa para comparar Strings que devuelven algunos métodos. Evita sacar error 
+	 * por los espacios finales de cada línea y por los saltos de línea al final
 	 */
 	void compareLines(String expected, String result) {
 		String exp[]=expected.split("\n");
 		String res[]=result.split("\n");
 		boolean iguales = true;
 		for (int i=0; i<exp.length && iguales; i++) {
-			
-			// si la línea es Health=1.2345  o Food level=1.2345  
-			// se extraen los números y se comparan con 0.01 de margen
-			String ee[]=exp[i].split("=");
-			if (ee[0].equals("Health") || ee[0].equals("Food level")) {
-				String rr[]=res[i].trim().split("=");
-				if (ee[0].equals(rr[0])) {
-					double ed = Double.parseDouble(ee[1]);
-					double rd = Double.parseDouble(rr[1]);
-					
-					assertEquals(ee[0],ed,rd,0.01);
-				}
-			}
-			else
-				assertEquals("linea "+i, exp[i],res[i].trim());
+			assertEquals("linea "+i, exp[i],res[i].trim());
 		}
 	}
 

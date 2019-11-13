@@ -1,5 +1,4 @@
 package test.model;
-
 import model.*;
 import static org.junit.Assert.*;
 
@@ -56,8 +55,8 @@ public class Location_P1Test {
         
         assertSame (earth,auxloc.getWorld());
         assertEquals (20.5,auxloc.getX(),0.0);
-        assertEquals (Location.UPPER_Y_VALUE+0.0001,auxloc.getY(),0.00001); //modificado para P2
-        assertEquals (41.1,auxloc.getZ(),0.001);
+        assertEquals (Location.UPPER_Y_VALUE+0.0001,auxloc.getY(),0.0); //modificado para P2
+        assertEquals (41.1,auxloc.getZ(),0.0);
         assertFalse (Location.check(auxloc)); //añadido para P2
     }
        
@@ -65,7 +64,7 @@ public class Location_P1Test {
     public final void testGetters_4() {
 
         Location auxloc = new Location(earth, 20.5, -0.0001, 41.1);
-        assertEquals (-0.0001,auxloc.getY(),0.000001);   //modificado para la P2
+        assertEquals (-0.0001,auxloc.getY(),0.0);   //modificado para la P2
         assertFalse (Location.check(auxloc)); //añadido para P2
     }
 
