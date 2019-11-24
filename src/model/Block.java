@@ -67,21 +67,34 @@ public abstract class Block {
         return "[" + type + "]";
     }
 
-//    /**   DO ZROBIENIA W ECLIPSE
-//     * Function generated automatically that creates hashCode.
-//     *
-//     * @return hashCode.
-//     */
-//    @Override
-//    public int hashCode() {
-//    }
+    /**
+     * Creates a hashcode using only the type
+     * @return The hashcode
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
+        return result;
+    }
 
-//    /** DO ZROBIENIA W ECLIPSE
-//     * Compares this object to another indicated.
-//     *
-//     * @return true if objects are equal, false if not..
-//     */
-//    @Override
-//    public boolean equals(Object obj) {
-//    }
+    /**
+     * Determines identity by comparing only the type.
+     * @param obj The object which should be checked
+     * @return whether the objects are the same
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Block other = (Block) obj;
+        if (type != other.type)
+            return false;
+        return true;
+    }
 }

@@ -13,7 +13,13 @@ import java.util.*;
  * The player is created with an item in his hand that is a wooden sword (WOOD_SWORD material).
  */
 public class Inventory {
+    /**
+     * array list that consist of itemstack class objects and  represents player's inventory.
+     */
     private ArrayList<ItemStack> inventory;
+    /**
+     * ItemStack class object that represents the item user hold in hand.
+     */
     private ItemStack inHand;
 
     /**

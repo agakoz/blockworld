@@ -17,6 +17,9 @@ public class ItemStack {
      * type of material
      */
     private Material type;
+    /**
+     * amount of the object.
+     */
     private int amount;
 
     /**
@@ -32,6 +35,11 @@ public class ItemStack {
         this.type = type;
         setAmount(amount);
     }
+
+    /**
+     * Copy contructor
+     * @param itemStack item stack that will be copied into the new one.
+     */
     public ItemStack(ItemStack itemStack){
         this.type=itemStack.getType();
         this.amount=itemStack.getAmount();
@@ -58,7 +66,7 @@ public class ItemStack {
     /**
      * It assigns an amount of units to the item stack.
      *
-     * @param amount
+     * @param amount value to be set as the amount.
      * @throws StackSizeException if the amount of items is not between 1 and MAX_STACK_SIZE,
      *                            or if the material is of type tool or weapon and amount is different from 1.
      */
@@ -101,7 +109,7 @@ public class ItemStack {
     }
     /**
      * Compares this object to another indicated.
-     *
+     * @param obj The object which should be checked
      * @return true if objects are equal, false if not..
      */
     @Override

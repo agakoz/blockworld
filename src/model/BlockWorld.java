@@ -95,7 +95,7 @@ public class BlockWorld {
             if (world.getBlockAt(p.getLocation()).getType().isLiquid())
                 p.damage(world.getBlockAt(p.getLocation()).getType().getValue());
         }
-
+        System.out.println(world.getItemsAt(p.getLocation()));
         if (world.getItemsAt(p.getLocation()) != null) {
             p.addItemsToInventory(world.getItemsAt(p.getLocation()));
             world.removeItemsAt(p.getLocation());
@@ -122,54 +122,64 @@ public class BlockWorld {
      * @throws IllegalArgumentException if the argument ‘times’ is less than or equal to zero.
      */
     public void useItem(Player p, int times) throws EntityIsDeadException, IllegalArgumentException {
-
-        ItemStack usedItem = p.useItemInHand(times);
-        ItemStack drop = null;
-        Location loc = p.getOrientation();
-        double damage;
-        if (usedItem != null) {
-            damage = usedItem.getType().getValue() * times;
-
-            try {
-                if (!world.isFree(loc)) {
-                    if (world.getBlockAt(loc) instanceof SolidBlock) {
-                        if (damage >= world.getBlockAt(loc).getType().getValue())
-                            drop = ((SolidBlock) world.getBlockAt(loc)).getDrops();
-                        world.destroyBlockAt(loc);
-                        world.addItems(loc, drop);
-
-                    } else if (world.getCreatureAt(loc) != null) {
-                        Creature creature;
-                        world.getCreatureAt(loc).damage(damage);
-                        if ((creature = world.getCreatureAt(loc)) instanceof Animal) {
-                            if (creature.isDead()) {
-                                drop = ((Animal) creature).getDrop();
-                                world.killCreature(loc);
-                                world.addItems(loc, drop);
+        try {
+            ItemStack usedItem = p.useItemInHand(times);
+            if (usedItem != null) {
+                Location location = p.getOrientation();
+                if (!usedItem.getType().isEdible() && Location.check(location)) {
+                    double damage;
+                    if (usedItem.getType().isBlock()) {
+                        if (world.isFree(location)) {
+                            try {
+                                world.addBlock(location, new SolidBlock(usedItem.getType()));
+                            } catch (BadLocationException e) {
+                            } catch (WrongMaterialException e) {
+                                e.printStackTrace();
+                                System.exit(1);
                             }
+                            return;
                         }
-                        if ((creature = world.getCreatureAt(loc)) instanceof Monster) {
-                            if (creature.isDead()) {
-                                world.killCreature(loc);
-                            } else {
-                                p.damage(0.5 * times);
-
-                            }
-
-                        }
-
+                        damage = 0.1 * times;
+                    } else {
+                        damage = usedItem.getType().getValue() * times;
                     }
 
-                } else if (!world.isFree(loc) && usedItem.getType().isBlock()) {
-                    world.addBlock(loc, new SolidBlock(usedItem.getType()) {
-                    });
+
+                    Block block;
+                    Creature creature;
+                    if ((block = world.getBlockAt(location)) != null) {
+                        if (block.getClass() == SolidBlock.class) {
+                            SolidBlock solidBlock = (SolidBlock) block;
+                            if (solidBlock.breaks(damage)) {
+                                world.destroyBlockAt(location);
+                                if (solidBlock.getDrops() != null) {
+                                    world.addItems(location, solidBlock.getDrops());
+                                }
+                            }
+                        }
+                    } else if ((creature = world.getCreatureAt(location)) != null) {
+                        if (creature.getClass() == Monster.class) {
+                            Monster monster = (Monster) creature;
+                            monster.damage(damage);
+                            if (!monster.isDead()) {
+                                p.damage(0.5 * times);
+                            } else {
+                                world.killCreature(location);
+                            }
+                        } else if (creature.getClass() == Animal.class) {
+                            Animal animal = (Animal) creature;
+                            animal.damage(damage);
+                            if (animal.isDead()) {
+                                world.killCreature(location);
+                                world.addItems(location, animal.getDrops());
+                            }
+                        }
+                    }
                 }
-            } catch (BadLocationException | WrongMaterialException ex) {
-                System.err.println(ex.getMessage());
             }
-
+        } catch (BadLocationException ex) {
+            throw new RuntimeException();
         }
-
     }
 
     /**
@@ -189,6 +199,7 @@ public class BlockWorld {
 
     /**
      * Opens the given input file and executes each one of its commands (by calling play(Scanner)).
+     *
      * @param path path to the document
      * @throws FileNotFoundException if the file is not found.
      */
@@ -199,7 +210,7 @@ public class BlockWorld {
     }
 
     /**
-     *  Creates the scanner that reads from the standard input the commands to be executed.
+     * Creates the scanner that reads from the standard input the commands to be executed.
      */
     public void playFromConsole() {
         Scanner consoleScanner = new Scanner(System.in);
@@ -209,11 +220,12 @@ public class BlockWorld {
 
     /**
      * Executes the commands it reads, line by line, from the Scanner object passed as argument.
-     *  It catches the exceptions that may occur during the execution of these commands,
-     *  printing the exception message to the error output.
-     *  If an unknown command is found, it displays an appropriate error message through the error output
-     *  and continues reading the next command. It stops reading from the Scanner object if
-     *  there is nothing left to read or the player has died.
+     * It catches the exceptions that may occur during the execution of these commands,
+     * printing the exception message to the error output.
+     * If an unknown command is found, it displays an appropriate error message through the error output
+     * and continues reading the next command. It stops reading from the Scanner object if
+     * there is nothing left to read or the player has died.
+     *
      * @param sc scanner
      */
     public void play(Scanner sc) {

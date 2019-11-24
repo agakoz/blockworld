@@ -9,6 +9,7 @@ import org.bukkit.util.noise.PerlinOctaveGenerator;
 
 import java.util.*;
 import java.util.Set;
+
 import model.entities.*;
 import model.exceptions.*;
 
@@ -81,11 +82,23 @@ public class World {
      * set(-24,24,70)
      */
     class HeightMap {
+        /**
+         * map of the height in the world.
+         */
         double[][] heightMap;
-
+        /**
+         * value of the positive limit of the world
+         */
         int positiveWorldLimit;
+        /**
+         * value of the negative limit of the world
+         */
         int negativeWorldLimit;
 
+        /**
+         * constructor of the heighmap
+         * @param worldsize size of the world
+         */
         HeightMap(int worldsize) {
             heightMap = new double[worldsize][worldsize];
             positiveWorldLimit = worldsize / 2;
@@ -97,11 +110,18 @@ public class World {
          *
          * @param x coordenada 'x' entre 'positiveWorldLimit' y 'negativeWorldLimit'
          * @param z coordenada 'z' entre 'positiveWorldLimit' y 'negativeWorldLimit'
+         * @return the y axis coordinate
          */
         double get(double x, double z) {
             return heightMap[(int) x - negativeWorldLimit][(int) z - negativeWorldLimit];
         }
 
+        /**
+         * simple setter
+         * @param x xaxis parameter
+         * @param z z axis parameter
+         * @param y y axis parameter
+         */
         void set(double x, double z, double y) {
             heightMap[(int) x - negativeWorldLimit][(int) z - negativeWorldLimit] = y;
         }
@@ -241,7 +261,10 @@ public class World {
                 for (int k = -1; k <= 1; k++) {
                     temploc = new Location(this, loc.getX() + k, loc.getY() + j, loc.getZ() + i);
                     if (getItemsAt(temploc) != null)
-                        neighbourhoodString.append(getItemsAt(temploc).getType().getSymbol());
+                        if (getItemsAt(temploc).getType().isBlock())
+                            neighbourhoodString.append(Character.toUpperCase(getItemsAt(temploc).getType().getSymbol()));
+                        else neighbourhoodString.append(getItemsAt(temploc).getType().getSymbol());
+
                     else if (getCreatureAt(temploc) != null)
                         neighbourhoodString.append(getCreatureAt(temploc).getSymbol());
                     else if (temploc.equals(getPlayer().getLocation()))
@@ -253,8 +276,10 @@ public class World {
                     else if (temploc.isFree())
                         neighbourhoodString.append(".");
                 }
+                if(j>=0)
                 neighbourhoodString.append(" ");
             }
+            if(i<1)
             neighbourhoodString.append("\n");
         }
         return neighbourhoodString.toString();
@@ -283,7 +308,7 @@ public class World {
      * @throws BadLocationException if the location does not beong to this world.
      */
     public void removeItemsAt(Location loc) throws BadLocationException {
-        if (this.equals(loc.getWorld()) && items.containsKey(loc)) {
+        if (this.equals(loc.getWorld()) ) {
             items.remove(loc);
         } else throw new BadLocationException("Location does not belong to this world.");
     }
@@ -680,6 +705,13 @@ public class World {
         }
     }
 
+    /**
+     * fills the given location with the given liquidblock
+     * @param liquid liquid we want to put
+     * @param from location to be filled
+     * @throws WrongMaterialException  when the block is not of the liquid type.
+     * @throws BadLocationException when the location is wrong
+     */
     private void floodFill(Material liquid, Location from) throws WrongMaterialException, BadLocationException {
         if (!liquid.isLiquid())
             throw new WrongMaterialException(liquid);
@@ -695,6 +727,7 @@ public class World {
     /**
      * Obtiene las posiciones adyacentes a esta que no estĂĄn por encima y estĂĄn libres
      *
+     * @param location location considered.
      * @return si esta posiciĂłn pertenece a un mundo, devuelve sĂłlo aquellas posiciones adyacentes vĂĄlidas para ese mundo,  si no, devuelve todas las posiciones adyacentes
      * @throws BadLocationException cuando la posiciĂłn es de otro mundo
      */
@@ -722,21 +755,25 @@ public class World {
      * @param loc   location where the block will be added
      * @param block bloack that will be added
      * @throws BadLocationException if the location does not belong to this world, it is outside its limits,
-     * or is occupied by the player.
+     *                              or is occupied by the player.
      */
     public void addBlock(Location loc, Block block) throws BadLocationException {
         if (this != loc.getWorld()) throw new BadLocationException("the location does not belong to this world ");
-        if(!Location.check(loc)) throw new BadLocationException("the location is out of world limits. ");
-        else if (loc == getPlayer().getLocation())
-            throw new BadLocationException("The location  is occupied by the player.");
-        else {
-
-            if (getBlockAt(loc) != null) destroyBlockAt(loc);
-            else if (getItemsAt(loc) != null) items.remove(loc);
-            else if (getCreatureAt(loc) != null) killCreature(loc);
-            blocks.put(loc, block);
-            heightMap.set(loc.getX(), loc.getZ(), loc.getY());
+        if (!Location.check(loc)){
+            throw new BadLocationException("Location "+loc+" is not in the world bounds");
         }
+        if (player.getLocation().equals(loc) && !block.getType().isLiquid())
+            throw new BadLocationException("Cannot place a block at the players location");
+        if (blocks.containsKey(loc)) {
+            blocks.remove(loc);
+        } else {
+            if(heightMap.get(loc.getX(),loc.getZ())<loc.getY()){
+                heightMap.set(loc.getX(),loc.getZ(),loc.getY());
+            }
+        }
+        items.remove(loc);
+        creatures.remove(loc);
+        blocks.put(loc,block);
     }
 
     /**
@@ -748,7 +785,8 @@ public class World {
     public void addCreature(Creature creature) throws BadLocationException {
         if (this != creature.getLocation().getWorld())
             throw new BadLocationException("creature’s location does not belong to this world");
-        if(!Location.check(creature.getLocation())) throw new BadLocationException("the location is out of world limits. ");
+        if (!Location.check(creature.getLocation()))
+            throw new BadLocationException("the location is out of world limits. ");
         if (!creature.getLocation().isFree()) throw new BadLocationException("the location is  occupied.");
         if (getItemsAt(creature.getLocation()) != null) items.remove((creature.getLocation()));
         creatures.put(creature.getLocation(), creature);
@@ -763,7 +801,7 @@ public class World {
      */
     public void addItems(Location loc, ItemStack item) throws BadLocationException {
         if (this != loc.getWorld()) throw new BadLocationException("location does not belong to this world");
-        if(!Location.check(loc)) throw new BadLocationException("the location is out of world limits. ");
+        if (!Location.check(loc)) throw new BadLocationException("the location is out of world limits. ");
         if (!loc.isFree()) throw new BadLocationException("the location is  occupied.");
         if (getItemsAt(loc) == null) items.remove(loc);
         items.put(loc, item);
@@ -780,13 +818,27 @@ public class World {
      */
     public void destroyBlockAt(Location loc) throws BadLocationException {
         if (this != loc.getWorld()) throw new BadLocationException("location does not belong to this world");
-        if (getBlockAt(loc) == null) throw new BadLocationException("No block in this location");
-        if (loc.getY() == 0) throw new BadLocationException("Block is at zero height");
-        if (getBlockAt(loc) instanceof SolidBlock) {
-            if (((SolidBlock) getBlockAt(loc)).getDrops() != null)
-                addItems(loc, ((SolidBlock) getBlockAt(loc)).getDrops());
+        else if (getBlockAt(loc) == null) throw new BadLocationException("No block in this location");
+        else if (loc.getY() == 0) throw new BadLocationException("Block is at zero height");
+        if (blocks.containsKey(loc)) {
+            if (blocks.get(loc).getClass()==SolidBlock.class) {
+                if (heightMap.get(loc.getX(), loc.getZ()) == loc.getY()) {
+                    Location tempLoc = new Location(loc.below());
+                    while (!blocks.containsKey(tempLoc) && tempLoc.getY() >= 0) {
+                        tempLoc = tempLoc.below();
+                    }
+                    heightMap.set(tempLoc.getX(), tempLoc.getZ(), Math.max(tempLoc.getY(), 0));
+                }
+                SolidBlock block = (SolidBlock) blocks.get(loc);
+                if (block.getDrops() != null) {
+                    items.put(loc, block.getDrops());
+                }
+            }
+            blocks.remove(loc);
+        } else {
+            throw new BadLocationException("No block to remove at "+loc);
         }
-        blocks.remove(loc);
+
     }
 
     /**
@@ -823,13 +875,14 @@ public class World {
 
     /**
      * It remove from the world the creature in the given location.
+     *
      * @param loc location from which the creature will be removed
-     * @throws BadLocationException  if the location does not belong to this world
-     * or there is no creature in that location.
+     * @throws BadLocationException if the location does not belong to this world
+     *                              or there is no creature in that location.
      */
-    public void killCreature(Location loc) throws BadLocationException{
+    public void killCreature(Location loc) throws BadLocationException {
         if (this != loc.getWorld()) throw new BadLocationException("location does not belong to this world");
-        if(getCreatureAt(loc)==null) throw new BadLocationException("no creature in that location.");
+        if (getCreatureAt(loc) == null) throw new BadLocationException("no creature in that location.");
         creatures.remove(loc);
     }
 

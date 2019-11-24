@@ -24,6 +24,9 @@ public class Player extends LivingEntity {
      * Represent the maximum levels of food that a player can have.
      */
     public static final double MAX_FOODLEVEL = 20;
+    /**
+     * User's symbol
+     */
     private static char symbol = 'P';
     /**
      * Player's inventory in which he/she holds the items.
@@ -37,6 +40,11 @@ public class Player extends LivingEntity {
      */
     private Location orientation;
 
+    /**
+     * Simple constructor that assignes all the values and defines the user's orientation and inventory
+     * @param name name of the player
+     * @param world world to which the player will be assigned
+     */
     public Player(String name, World world) {
         super(new Location(world, 0,0,0), MAX_HEALTH);
         try {
@@ -77,7 +85,7 @@ public class Player extends LivingEntity {
      */
     public void setFoodLevel(double foodLevel) {
         if (foodLevel > MAX_FOODLEVEL) this.foodLevel = MAX_FOODLEVEL;
-            //else if (foodLevel < 0) this.foodLevel = 0;
+           else if (foodLevel < 0) this.foodLevel = 0;
         else this.foodLevel = foodLevel;
     }
 
@@ -129,7 +137,7 @@ public class Player extends LivingEntity {
             throw new BadLocationException("Location is not valid.");
         }
         decreaseFoodLevel(0.05);
-        location = newLocation;
+        location = new Location(newLocation);
         orientation.add(new Location(orientation.getWorld(), dx, dy, dz));
         return new Location(location);
     }
@@ -247,7 +255,7 @@ public class Player extends LivingEntity {
      * @return player’s orientation as an absolute location.
      */
     public Location getOrientation() {
-        return orientation;
+        return new Location(orientation);
     }
 
     /**
@@ -270,15 +278,20 @@ public class Player extends LivingEntity {
      * or the orientation is not towards an adjacent location.
      */
     public Location orientate(int dx, int dy, int dz) throws EntityIsDeadException, BadLocationException {
-        Location newOrientLoc = new Location(orientation).add(new Location(orientation.getWorld(), dx, dy, dz));
+        Location newOrientLoc = new Location(location).add(new Location(location.getWorld(), dx, dy, dz));
         if (isDead()) throw new EntityIsDeadException();
         if (dx == 0 && dy == 0 && dz == 0)
             throw new BadLocationException("a player cannot be oriented towards himself");
-        if (!location.getNeighborhood().contains(newOrientLoc))
+        if (dx>1 || dx<-1 || dy>1 || dy<-1 || dz>1 || dz<-1 )
             throw new BadLocationException("the orientation is not torwards an adjacent location.");
         orientation = newOrientLoc;
         return orientation;
     }
+
+    /**
+     * calculates the relative location of the player.
+     * @return relative location.
+     */
     private Location getRelativeLocation(){
         double x= orientation.getX() - location.getX();
         double y= orientation.getY() - location.getY();
@@ -300,59 +313,55 @@ public class Player extends LivingEntity {
                 "Inventory=" + inventory.toString();
     }
 
-//    /**
-//     * Generated automatically that creates hashCode.
-//     *
-//     * @return hashCode.
-//     */
-//    @Override
-//    public int hashCode() {
-//        final int prime = 31;
-//        int result = 1;
-//        long temp;
-//        temp = Double.doubleToLongBits(foodLevel);
-//        result = prime * result + (int) (temp ^ (temp >>> 32));
-//        temp = Double.doubleToLongBits(health);
-//        result = prime * result + (int) (temp ^ (temp >>> 32));
-//        result = prime * result + ((inventory == null) ? 0 : inventory.hashCode());
-//        result = prime * result + ((location == null) ? 0 : location.hashCode());
-//        result = prime * result + ((name == null) ? 0 : name.hashCode());
-//        return result;
-//    }
-//
-//    /**
-//     * Compares this object to another indicated.
-//     *
-//     * @return true if objects are equal, false if not.
-//     */
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (this == obj)
-//            return true;
-//        if (obj == null)
-//            return false;
-//        if (getClass() != obj.getClass())
-//            return false;
-//        Player other = (Player) obj;
-//        if (Double.doubleToLongBits(foodLevel) != Double.doubleToLongBits(other.foodLevel))
-//            return false;
-//        if (Double.doubleToLongBits(health) != Double.doubleToLongBits(other.health))
-//            return false;
-//        if (inventory == null) {
-//            if (other.inventory != null)
-//                return false;
-//        } else if (!inventory.equals(other.inventory))
-//            return false;
-//        if (location == null) {
-//            if (other.location != null)
-//                return false;
-//        } else if (!location.equals(other.location))
-//            return false;
-//        if (name == null) {
-//            if (other.name != null)
-//                return false;
-//        } else if (!name.equals(other.name))
-//            return false;
-//        return true;
-//    }
+    /**
+     * Generated automatically that creates hashCode.
+     *
+     * @return hashCode.
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        long temp;
+        temp = Double.doubleToLongBits(foodLevel);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
+        result = prime * result + ((inventory == null) ? 0 : inventory.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((orientation == null) ? 0 : orientation.hashCode());
+        return result;
+    }
+
+    /**
+     * Compares this object to another indicated.
+     * @param obj The object which should be checked
+     * @return whether the objects are the same
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Player other = (Player) obj;
+        if (Double.doubleToLongBits(foodLevel) != Double.doubleToLongBits(other.foodLevel))
+            return false;
+        if (inventory == null) {
+            if (other.inventory != null)
+                return false;
+        } else if (!inventory.equals(other.inventory))
+            return false;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        if (orientation == null) {
+            if (other.orientation != null)
+                return false;
+        } else if (!orientation.equals(other.orientation))
+            return false;
+        return true;
+    }
 }

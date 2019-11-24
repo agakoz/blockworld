@@ -370,7 +370,9 @@ public class Location {
         else
             sb.append(world);
 
-        sb.append(",x=").append(x).append(",y=").append(y).append(",z=").append(z).append("}");
+        sb.append(",x=").append(x)
+                .append(",y=").append(y)
+                .append(",z=").append(z).append("}");
         return sb.toString();
     }
 

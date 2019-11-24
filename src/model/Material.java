@@ -119,6 +119,10 @@ public enum Material {
 
     }
 
+    /**
+     * checks if the material type is liquid
+     * @return true if it is liquid, false if it is not.
+     */
     public boolean isLiquid() {
         return (symbol == '#' || symbol == '@');
     }
@@ -176,6 +180,7 @@ public enum Material {
      *
      * @param first first boundry position of the enumerated type to look beetween
      * @param last  last boundry position of the enumerated type to look beetween
+     *@return random material.
      */
     public static Material getRandomItem(int first, int last) {
         int i = rng.nextInt(last - first + 1) + first;
